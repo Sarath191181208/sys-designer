@@ -20,37 +20,39 @@
 	const nodes = writable<Node[]>([]);
 	const edges = writable<Edge[]>([]);
 
+	const runSimulation = (parentsList: Node[], visited: string[]) => {
+		if (parentsList.length === 0) return;
 
-  const runSimulation = (parentsList: Node[], visited: string[]) => {
-    if(parentsList.length === 0) return;
+		// make all the edges normal i.e animated false
+		edges.update((prev) => prev.map((edge) => ({ ...edge, animated: false })));
 
-    console.log({ parentsList, visited });
+		const newParentsList: Node[] = [];
+		// get all the connected nodes to the parentsList
+		for (const parent of parentsList) {
+			const connectedEdges = $edges.filter(
+				(edge) => edge.source === parent.id || edge.target === parent.id
+			);
+			visited.push(parent.id);
+			for (const edge of connectedEdges) {
+				const otherNodeId = edge.source === parent.id ? edge.target : edge.source;
+				const node = $nodes.find((node) => node.id === otherNodeId);
+				if (node && !visited.includes(node.id)) {
+					edges.update((prev) =>
+						prev.map((_edge) => (_edge.id === edge.id ? { ..._edge, animated: true } : _edge))
+					);
+					newParentsList.push(node);
+				}
+			}
+		}
 
-    // make all the edges normal i.e animated false 
-    edges.update((prev) => prev.map((edge) => ({ ...edge, animated: false })));
+		//runSimulation(newParentsList, visited);
+		setTimeout(() => runSimulation(newParentsList, visited), 1000);
+	};
 
-    const newParentsList: Node[] = [];
-    // get all the connected nodes to the parentsList 
-    for(const parent of parentsList) {
-      const connectedEdges = $edges.filter((edge) => edge.source === parent.id || edge.target === parent.id);
-      for(const edge of connectedEdges) {
-        const node = $nodes.find((node) => node.id != parent.id && node.id === edge.target || node.id === edge.source);
-        if(node && !visited.includes(node.id)) {
-          edges.update((prev) => prev.map((edge) => edge.id === edge.id ? { ...edge, animated: true } : edge));
-          visited.push(node.id);
-          newParentsList.push(node);
-        }
-      }
-    }
-
-    //runSimulation(newParentsList, visited);
-    setTimeout(() => runSimulation(newParentsList, visited), 1000);
-  }
-
-  const startSimulation = () => {
-    const clientNodes = $nodes.filter((node) => node.id.includes(NODE_TYPES.client)); 
-    runSimulation(clientNodes, []);
-  }
+	const startSimulation = () => {
+		const clientNodes = $nodes.filter((node) => node.id.includes(NODE_TYPES.client));
+		runSimulation(clientNodes, []);
+	};
 
 	const NODE_TYPES = {
 		server: 'server',
@@ -143,7 +145,9 @@
 		>Add Load balancer</button
 	>
 	<button class="border-black border-2 p-2" on:click={() => addServer()}>Add Server</button>
-  <button class="border-black border-2 p-2" on:click={() => startSimulation()}>Start Simulation</button>
+	<button class="border-black border-2 p-2" on:click={() => startSimulation()}
+		>Start Simulation</button
+	>
 </div>
 
 <style lang="postcss">
