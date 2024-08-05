@@ -98,7 +98,6 @@
 			routingStrategy: 'ROUND_ROBIN'
 		};
 		const uid = getUID({ nodes: $nodes, nodeType: NODE_TYPES.load_balancer });
-		console.log(uid);
 		const newLB: Node = {
 			id: `${NODE_TYPES.load_balancer}-${uid + 1}`,
 			data: { label: `Load Balancer ${uid + 1}`, data: { loadBalancer } },
