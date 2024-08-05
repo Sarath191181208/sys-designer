@@ -76,19 +76,19 @@
 		};
 
 		nodes.update((prev) => [...prev, newServer]);
+		return newServer;
 	};
 
 	const addClient = () => {
 		const client: MobileClient = {};
 		const uid = getUID({ nodes: $nodes, nodeType: NODE_TYPES.client });
-		nodes.update((prev) => [
-			...prev,
-			{
-				id: `${NODE_TYPES.client}-${uid + 1}`,
-				data: { label: `Client ${uid + 1}`, data: { client } },
-				position: { x: 0, y: 0 }
-			}
-		]);
+		const newClient: Node = {
+			id: `${NODE_TYPES.client}-${uid + 1}`,
+			data: { label: `Client ${uid + 1}`, data: { client } },
+			position: { x: 0, y: 0 }
+		};
+		nodes.update((prev) => [...prev, newClient]);
+		return newClient;
 	};
 
 	const addLoadBalancer = () => {
@@ -98,15 +98,14 @@
 			routingStrategy: 'ROUND_ROBIN'
 		};
 		const uid = getUID({ nodes: $nodes, nodeType: NODE_TYPES.load_balancer });
-    console.log(uid);
-		nodes.update((prev) => [
-			...prev,
-			{
-				id: `${NODE_TYPES.load_balancer}-${uid + 1}`,
-				data: { label: `Load Balancer ${uid + 1}`, data: { loadBalancer } },
-				position: { x: 0, y: 0 }
-			}
-		]);
+		console.log(uid);
+		const newLB: Node = {
+			id: `${NODE_TYPES.load_balancer}-${uid + 1}`,
+			data: { label: `Load Balancer ${uid + 1}`, data: { loadBalancer } },
+			position: { x: 0, y: 0 }
+		};
+		nodes.update((prev) => [...prev, newLB]);
+		return newLB;
 	};
 
 	const snapGrid: [number, number] = [25, 25];
