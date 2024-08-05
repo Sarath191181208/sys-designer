@@ -55,7 +55,7 @@
 	const NODE_TYPES = {
 		server: 'server',
 		client: 'client',
-		load_balancer: 'load-balancer'
+		load_balancer: 'load_balancer'
 	};
 
 	const addServer = () => {
@@ -98,6 +98,7 @@
 			routingStrategy: 'ROUND_ROBIN'
 		};
 		const uid = getUID({ nodes: $nodes, nodeType: NODE_TYPES.load_balancer });
+    console.log(uid);
 		nodes.update((prev) => [
 			...prev,
 			{
