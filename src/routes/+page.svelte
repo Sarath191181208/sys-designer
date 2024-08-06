@@ -14,6 +14,8 @@
 	import type { Server } from '$lib/node_components/server/server';
 	import type { LoadBalancer } from '$lib/node_components/server/load_balancer';
 	import type { MobileClient } from '$lib/node_components/client/mobile';
+	import { getNewDefaultServer, getNewDefaultClient, getNewDefaultLoadBalancer } from '$lib/get_default_node';
+  import { NODE_TYPES, type NodeType } from '$lib/node_types';
 
 	import { getUID } from './getUID';
 	import QueueNode from '../components/QueueNode.svelte';
@@ -102,68 +104,38 @@
 		runSimulation(clientNodes, []);
 	};
 
-	const NODE_TYPES = {
-		server: 'server',
-		client: 'client',
-		load_balancer: 'load_balancer'
-	};
+  const getFlowNode = (type: NodeType, nodeData: Record<string, any> )  => {
+    const uid = getUID({nodes: $nodes, nodeType: type})
+    return {
+      id: `${type}-${uid + 1}`,
+      type: VISUAL_NODE_TYPES.selectorNode,
+      data: {
+        label: `${type} ${uid + 1}`,
+        requestsCount: writable<number>(0),
+        config: {...nodeData, type: type}
+      },
+      position: { x: 0, y: 0}
+    } 
+  };
 
 	const addServer = () => {
-		const server: Server = {
-			address: '192.168.10.10',
-			port: 5000,
-			ram: 1024 * 2,
-			cpu: 1.5,
-			failureRate: 0.01,
-			status: 'ONLINE'
-		};
-		const uid = getUID({ nodes: $nodes, nodeType: NODE_TYPES.server });
-
-		const newServer: Node = {
-			id: `${NODE_TYPES.server}-${uid + 1}`,
-			type: VISUAL_NODE_TYPES.selectorNode,
-			data: {
-				label: `Server ${server.address}:${server.port}`,
-				requestsCount: writable<number>(0),
-				data: { server }
-			},
-			position: { x: 0, y: 0 }
-		};
-
+		const server: Server = getNewDefaultServer();
+		const newServer = getFlowNode(NODE_TYPES.server, { server });
 		nodes.update((prev) => [...prev, newServer]);
 		return newServer;
 	};
 
 	const addClient = () => {
-		const client: MobileClient = {};
-		const uid = getUID({ nodes: $nodes, nodeType: NODE_TYPES.client });
-		const newClient: Node = {
-			id: `${NODE_TYPES.client}-${uid + 1}`,
-			type: VISUAL_NODE_TYPES.selectorNode,
-			data: { label: `Client ${uid + 1}`, requestsCount: writable<number>(5), data: { client } },
-			position: { x: 0, y: 0 }
-		};
+		const client: MobileClient = getNewDefaultClient();
+    const newClient = getFlowNode(NODE_TYPES.client, { client });
+    newClient.data.requestsCount = writable<number>(5);
 		nodes.update((prev) => [...prev, newClient]);
 		return newClient;
 	};
 
 	const addLoadBalancer = () => {
-		const loadBalancer: LoadBalancer = {
-			servers: [],
-			currentServerIndex: -1,
-			routingStrategy: 'ROUND_ROBIN'
-		};
-		const uid = getUID({ nodes: $nodes, nodeType: NODE_TYPES.load_balancer });
-		const newLB: Node = {
-			id: `${NODE_TYPES.load_balancer}-${uid + 1}`,
-			type: VISUAL_NODE_TYPES.selectorNode,
-			data: {
-				label: `Load Balancer ${uid + 1}`,
-				requestsCount: writable<number>(0),
-				data: { loadBalancer }
-			},
-			position: { x: 0, y: 0 }
-		};
+		const loadBalancer: LoadBalancer = getNewDefaultLoadBalancer();
+    const newLB = getFlowNode(NODE_TYPES.load_balancer, { loadBalancer });
 		nodes.update((prev) => [...prev, newLB]);
 		return newLB;
 	};
@@ -185,9 +157,9 @@
 	// connect the nodes
 	edges.update((prev) => [
 		...prev,
-		{ id: 'edge-client1-lb1', source: 'client-1', target: 'load_balancer-1' },
-		{ id: 'edge-lb-1-server1', source: 'load_balancer-1', target: 'server-1' },
-		{ id: 'edge-s1-s2', source: 'server-1', target: 'server-2' }
+		{ id: 'edge-client1-lb1', source: 'Client-1', target: 'Load Balancer-1' },
+		{ id: 'edge-lb-1-server1', source: 'Load Balancer-1', target: 'Server-1' },
+		{ id: 'edge-s1-s2', source: 'Server-1', target: 'Server-2' }
 	]);
 </script>
 
