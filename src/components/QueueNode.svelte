@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Handle, Position, type NodeProps } from '@xyflow/svelte';
 	import type { Writable } from 'svelte/store';
-	import { slide } from 'svelte/transition';
 
 	type $$Props = NodeProps;
 	$$restProps;
@@ -10,12 +9,12 @@
 		color: Writable<string>;
 		label: string;
 		requestsLimit: number | undefined;
-		requestsCount: Writable<number> | undefined;
+		requestsCount: Writable<number> ;
 	};
 
 	let { label, color, requestsLimit, requestsCount } = data;
-	const _queueLimit = (requestsLimit || 5) as number;
-	const _itemsCount = ($requestsCount || 0) as number;
+	$: _queueLimit = (requestsLimit || 5) as number;
+	$: _itemsCount = ($requestsCount || 0) as number;
 </script>
 
 <Handle type="target" position={Position.Left} style="background: #555;" />
@@ -26,14 +25,7 @@
 	<div class="flex justify-center">
 		<div class="h-6 border-2 border-black flex items-center p-2 gap-[2px] transition">
 			{#each Array(_queueLimit) as _, _i}
-				{#if _i < _itemsCount}
-					<div
-						class="w-4 h-4 bg-red-500 rounded-full p-2"
-						transition:slide={{ delay: 250, duration: 300 }}
-					></div>
-				{:else}
-					<div class="w-4 h-4 bg-transparent rounded-full p-2"></div>
-				{/if}
+					<div class={`w-4 h-4 rounded-full transition duration-500 p-2 ${(_i < _itemsCount) ? "bg-red-500" : "bg-transparent"}`}></div>
 			{/each}
 		</div>
 	</div>

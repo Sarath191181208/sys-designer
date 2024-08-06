@@ -29,8 +29,6 @@
 		selectorNode: 'selectorNode'
 	};
 
-	let rerenderConstant = 0;
-
 	const runSimulation = (parentsList: Node[], visited: string[]) => {
 		if (parentsList.length === 0) return;
 		const localNodes = $nodes;
@@ -60,13 +58,13 @@
 						prev.map((_edge) => (_edge.id === edge.id ? { ..._edge, animated: true } : _edge))
 					);
 					// push a single request to the destination server
-          if(node.data.requestsCount === undefined) {
-            node.data.requestsCount = writable<number>(0);
-          }
-          node.data.requestsCount.update((prev) => prev + 1);
+					if (node.data.requestsCount === undefined) {
+						node.data.requestsCount = writable<number>(0);
+					}
+					node.data.requestsCount.update((prev) => prev + 1);
 					// remove a single request from the parent node
 					// @ts-ignore
-          parent.data.requestsCount.update((prev) => prev - 1);
+					parent.data.requestsCount.update((prev) => prev - 1);
 
 					// push the node to the newParentsList
 					newParentsList.push(node);
@@ -82,20 +80,17 @@
 			});
 		}
 
-
 		// if requests are still left in parent push parents
 		for (const parent of parentsList) {
-      let count = 0;
-      parent.data.requestsCount.subscribe((val) => {
-        count = val;
-      });
+			let count = 0;
+			parent.data.requestsCount.subscribe((val) => {
+				count = val;
+			});
 			if (count > 0) {
 				newParentsList.push(parent);
 			}
 		}
 
-
-		rerenderConstant++; // This is just to force a re-render
 		nodes.set(localNodes);
 
 		//runSimulation(newParentsList, visited);
@@ -127,7 +122,11 @@
 		const newServer: Node = {
 			id: `${NODE_TYPES.server}-${uid + 1}`,
 			type: VISUAL_NODE_TYPES.selectorNode,
-			data: { label: `Server ${server.address}:${server.port}`, data: { server } },
+			data: {
+				label: `Server ${server.address}:${server.port}`,
+				requestsCount: writable<number>(0),
+				data: { server }
+			},
 			position: { x: 0, y: 0 }
 		};
 
@@ -158,7 +157,11 @@
 		const newLB: Node = {
 			id: `${NODE_TYPES.load_balancer}-${uid + 1}`,
 			type: VISUAL_NODE_TYPES.selectorNode,
-			data: { label: `Load Balancer ${uid + 1}`, data: { loadBalancer } },
+			data: {
+				label: `Load Balancer ${uid + 1}`,
+				requestsCount: writable<number>(0),
+				data: { loadBalancer }
+			},
 			position: { x: 0, y: 0 }
 		};
 		nodes.update((prev) => [...prev, newLB]);
@@ -188,35 +191,32 @@
 	]);
 </script>
 
-{#key rerenderConstant}
-	<div style:height="500px">
-		<SvelteFlow
-			{nodes}
-			{edges}
-			{nodeTypes}
-			{snapGrid}
-			fitView
-			onconnect={(event) => {
-				const { source, target } = event;
-				const edge = { id: `edge-${source}-${target}`, source: source, target: target };
-				const isSourceLoadBalancer = source.includes(NODE_TYPES.load_balancer);
+<div style:height="500px">
+	<SvelteFlow
+		{nodes}
+		{edges}
+		{nodeTypes}
+		{snapGrid}
+		fitView
+		onconnect={(event) => {
+			const { source, target } = event;
+			//const edge = last($edges);
+			const isSourceLoadBalancer = source.includes(NODE_TYPES.load_balancer);
+			if (isSourceLoadBalancer) {
+				const loadBalancerNode = $nodes.find((node) => node.id === source);
+				// @ts-ignore
+				const loadBalancer = loadBalancerNode?.data.data.loadBalancer;
+				loadBalancer.servers.push(target);
+			}
 
-				if (isSourceLoadBalancer) {
-					const loadBalancerNode = $nodes.find((node) => node.id === source);
-					// @ts-ignore
-					const loadBalancer = loadBalancerNode?.data.data.loadBalancer;
-					loadBalancer.servers.push(target);
-				}
-
-				edges.update((prev) => [...prev, edge]);
-			}}
-		>
-			<Controls />
-			<Background variant={BackgroundVariant.Dots} />
-			<MiniMap />
-		</SvelteFlow>
-	</div>
-{/key}
+			//edges.update((prev) => [...prev, edge]);
+		}}
+	>
+		<Controls />
+		<Background variant={BackgroundVariant.Dots} />
+		<MiniMap />
+	</SvelteFlow>
+</div>
 
 <div class="p-2 bg-gray-300">
 	<button class="border-black border-2 p-2" on:click={() => addClient()}>Add Client</button>
